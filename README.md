@@ -5,7 +5,7 @@
 The Ethereum NFTs dataset: https://www.kaggle.com/simiotic/ethereum-nfts <br>
 This dataset represents the activity of the Ethereum non-fungible token (NFT) market between the following dates:
 
-Start date: April 1, 2021
+Start date: April 1, 2021 <br>
 End date: September 25, 2021
 
 ## Getting started
