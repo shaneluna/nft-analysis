@@ -37,5 +37,5 @@ End date: September 25, 2021
 
 8. Place the downloaded zip in the /data folder and extract the nfts.sqlite
 
-9. Run streamlit application:
+9. Run streamlit application:<br>
 `streamlit run main.py`
