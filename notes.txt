@@ -1,0 +1,7 @@
+- who's made the most money
+- what is their strategy?
+    - they usually mint?
+- general mint vs non mint profit
+    - join the datasets into a single table
+        - add activity column
+        - add an order column
