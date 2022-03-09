@@ -36,3 +36,6 @@ End date: September 25, 2021
 7. Download the dataset from https://www.kaggle.com/simiotic/ethereum-nfts
 
 8. Place the downloaded zip in the /data folder and extract the nfts.sqlite
+
+9. Run streamlit application:
+`streamlit run main.py`
