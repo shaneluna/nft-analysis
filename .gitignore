@@ -132,11 +132,12 @@ dmypy.json
 ##################################################
 
 # MacOS
-*/.DS_Store
+*.DS_Store
 
 # Data
 **/*.zip
 **/*.sqlite
+*.csv
 
 # IDE / Editor files
 **/.vscode
