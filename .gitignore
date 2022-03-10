@@ -135,5 +135,12 @@ dmypy.json
 */.DS_Store
 
 # Data
-*.zip
-*.sqlite
+**/*.zip
+**/*.sqlite
+
+# IDE / Editor files
+**/.vscode
+
+# Pickled files
+**/*.pkl
+
