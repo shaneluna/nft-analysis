@@ -176,7 +176,7 @@ fig = px.scatter(
     opacity = .2,
     trendline = 'rolling',
     trendline_options = {'window': 2},
-    title = 'When To Sell - Days Since Purchase',
+    title = 'When To Sell - Days Since Mint Purchase',
     width = 1000,
     height = 1000
 )
