@@ -1,47 +1,26 @@
-import streamlit as st
+# module imports
+import matplotlib.pyplot as plt
+import plotly.express as px
+import numpy as np
 import pandas as pd
-import altair as alt
+import pickle
+import sqlite3
 
-from urllib.error import URLError
+# %%
+# sqlite connection
+con = sqlite3.connect('../data/nfts.sqlite')
+cur = con.cursor()
 
-@st.cache
-def get_UN_data():
-    AWS_BUCKET_URL = "http://streamlit-demo-data.s3-us-west-2.amazonaws.com"
-    df = pd.read_csv(AWS_BUCKET_URL + "/agri.csv.gz")
-    return df.set_index("Region")
+# %%
+# function to query sqlite database
+def get_results(cur: sqlite3.Cursor = cur, statement: str = '') -> pd.DataFrame:
+    '''
+    Returns results from sqlite query, in the form of a pandas dataframe.
+    '''
+    query = cur.execute(statement)
+    cols = [col[0] for col in query.description]
+    df = pd.DataFrame.from_records(data = query.fetchall(), columns = cols)
+    return df
 
-try:
-    df = get_UN_data()
-    countries = st.multiselect(
-        "Choose countries", list(df.index), ["China", "United States of America"]
-    )
-    if not countries:
-        st.error("Please select at least one country.")
-    else:
-        data = df.loc[countries]
-        data /= 1000000.0
-        st.write("### Gross Agricultural Production ($B)", data.sort_index())
-
-        data = data.T.reset_index()
-        data = pd.melt(data, id_vars=["index"]).rename(
-            columns={"index": "year", "value": "Gross Agricultural Product ($B)"}
-        )
-        chart = (
-            alt.Chart(data)
-            .mark_area(opacity=0.3)
-            .encode(
-                x="year:T",
-                y=alt.Y("Gross Agricultural Product ($B):Q", stack=None),
-                color="Region:N",
-            )
-        )
-        st.altair_chart(chart, use_container_width=True)
-except URLError as e:
-    st.error(
-        """
-        **This demo requires internet access.**
-
-        Connection error: %s
-    """
-        % e.reason
-    )
+# %%
+# building an initial dataset
