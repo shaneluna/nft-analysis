@@ -1,8 +1,8 @@
 # %%
 # module imports
+import argparse
 import gc
 import math
-from matplotlib import use
 import matplotlib.pyplot as plt
 import plotly.express as px
 import numpy as np
@@ -10,6 +10,12 @@ import pandas as pd
 import pickle
 import sqlite3
 import streamlit as st
+
+# %%
+# parsing arguments for use internally
+parser = argparse.ArgumentParser()
+parser.add_argument('--output_type', choices = ['plotly', 'streamlit'], default = 'streamlit')
+args = parser.parse_args()
 
 # %%
 # sqlite connection
@@ -105,7 +111,7 @@ profit_df.columns = ['total_wei_value']
 
 # %%
 # identifying top X winners and losers
-top_X = 200
+top_X = 300
 
 winners_df = profit_df.head(top_X).copy()
 winners_df['total_eth_value'] = (winners_df['total_wei_value'] / 1000000000000000000)
@@ -151,8 +157,6 @@ hist = px.histogram(
     width = 1000,
     height = 1000
 )
-# fig.show()
-st.plotly_chart(hist)
 
 # %%
 # creating a line plot for 'when to sell'
@@ -184,6 +188,13 @@ scat = px.scatter(
     width = 1000,
     height = 1000
 )
-# fig.show()
-st.plotly_chart(scat)
+
+# %%
+# showing visuals based on output_type parameter
+if args.output_type == 'streamlit':
+    st.plotly_chart(hist)
+    st.plotly_chart(scat)
+else:
+    hist.show()
+    scat.show()
 
