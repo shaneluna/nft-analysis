@@ -10,7 +10,7 @@ End date: September 25, 2021
 
 ## Getting started
 
-1. Ensure python3 installed:<br>
+1. Ensure python3 is installed:<br>
    `python --version`
 
 2. With git installed, clone project:<br>
@@ -35,7 +35,8 @@ End date: September 25, 2021
 
 7. Download the dataset from https://www.kaggle.com/simiotic/ethereum-nfts
 
-8. Place the downloaded zip in the /data folder and extract the nfts.sqlite
+8. Place the downloaded zip in the /data folder and extract the `nfts.sqlite` file
 
-9. Run streamlit application:<br>
-`streamlit run main.py`
+9. Run Python application:<br>
+`python -m main.py`
+
