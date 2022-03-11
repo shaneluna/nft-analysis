@@ -2,12 +2,14 @@
 # module imports
 import gc
 import math
+from matplotlib import use
 import matplotlib.pyplot as plt
 import plotly.express as px
 import numpy as np
 import pandas as pd
 import pickle
 import sqlite3
+import streamlit as st
 
 # %%
 # sqlite connection
@@ -28,70 +30,71 @@ def get_results(cur: sqlite3.Cursor = cur, statement: str = '') -> pd.DataFrame:
 # %%
 # building an initial dataset (takes 3min 16sec on macbook m1 10 core cpu)
 # who has made the most money 
-statement = '''
-with
-    mints_and_transfers as (
-        select
-            *
-            , 'mint' as activity
-        from mints
-        union all
-        select
-            *
-            , 'transfer' as activity
-        from transfers
-    )
-    , nfts_with_order as (
-        select
-            transaction_hash
-            , nft_address
-            , token_id
-            , activity
-            , from_address
-            , to_address
-            , transaction_value
-            , timestamp
-            , row_number() over (
-                partition by nft_address, token_id
-                order by timestamp asc
-            ) as row_num
-        from mints_and_transfers
-    )
-    , starts_join_ends as (
-        select
-            nwo1.transaction_hash
-            , nwo1.nft_address
-            , nwo1.token_id
-            , nwo1.activity as start_activity
-            , nwo1.to_address as start_address
-            , nwo1.transaction_value as start_value
-            , nwo1.timestamp as start_timestamp
-            , nwo1.row_num as start_row
-            , ifnull(nwo2.activity, 'hold') as end_activity
-            , ifnull(nwo2.to_address, nwo1.to_address) as end_address
-            , ifnull(nwo2.transaction_value, cmv.market_value) as end_value
-            , ifnull(nwo2.timestamp, 1632586540) as end_timestamp
-            , ifnull(nwo2.row_num, nwo1.row_num) as end_row
-        from nfts_with_order as nwo1
-        left join nfts_with_order as nwo2 on 
-            nwo1.nft_address = nwo2.nft_address
-            and nwo1.token_id = nwo2.token_id
-            and nwo1.row_num + 1 = nwo2.row_num
-        left join current_market_values as cmv on
-            nwo1.nft_address = cmv.nft_address
-            and nwo1.token_id = cmv.token_id
-    )
-    , pairs_with_deltas as (
-        select
-            *
-            , end_value - start_value as delta_value
-            , julianday(end_timestamp, 'unixepoch') - julianday(start_timestamp, 'unixepoch') as delta_days
-            , cast(start_row as string) || '->' || cast(end_row as string) as row_change
-        from starts_join_ends
-    )
-select * from pairs_with_deltas
-'''
-df = get_results(cur, statement)
+# statement = '''
+# with
+#     mints_and_transfers as (
+#         select
+#             *
+#             , 'mint' as activity
+#         from mints
+#         union all
+#         select
+#             *
+#             , 'transfer' as activity
+#         from transfers
+#     )
+#     , nfts_with_order as (
+#         select
+#             transaction_hash
+#             , nft_address
+#             , token_id
+#             , activity
+#             , from_address
+#             , to_address
+#             , transaction_value
+#             , timestamp
+#             , row_number() over (
+#                 partition by nft_address, token_id
+#                 order by timestamp asc
+#             ) as row_num
+#         from mints_and_transfers
+#     )
+#     , starts_join_ends as (
+#         select
+#             nwo1.transaction_hash
+#             , nwo1.nft_address
+#             , nwo1.token_id
+#             , nwo1.activity as start_activity
+#             , nwo1.to_address as start_address
+#             , nwo1.transaction_value as start_value
+#             , nwo1.timestamp as start_timestamp
+#             , nwo1.row_num as start_row
+#             , ifnull(nwo2.activity, 'hold') as end_activity
+#             , ifnull(nwo2.to_address, nwo1.to_address) as end_address
+#             , ifnull(nwo2.transaction_value, cmv.market_value) as end_value
+#             , ifnull(nwo2.timestamp, 1632586540) as end_timestamp
+#             , ifnull(nwo2.row_num, nwo1.row_num) as end_row
+#         from nfts_with_order as nwo1
+#         left join nfts_with_order as nwo2 on 
+#             nwo1.nft_address = nwo2.nft_address
+#             and nwo1.token_id = nwo2.token_id
+#             and nwo1.row_num + 1 = nwo2.row_num
+#         left join current_market_values as cmv on
+#             nwo1.nft_address = cmv.nft_address
+#             and nwo1.token_id = cmv.token_id
+#     )
+#     , pairs_with_deltas as (
+#         select
+#             *
+#             , end_value - start_value as delta_value
+#             , julianday(end_timestamp, 'unixepoch') - julianday(start_timestamp, 'unixepoch') as delta_days
+#             , cast(start_row as string) || '->' || cast(end_row as string) as row_change
+#         from starts_join_ends
+#     )
+# select * from pairs_with_deltas
+# '''
+# df = get_results(cur, statement)
+df = pickle.load(open('pickles/df.pkl', 'rb'))
 
 # %%
 # finding profits per address
@@ -102,7 +105,7 @@ profit_df.columns = ['total_wei_value']
 
 # %%
 # identifying top X winners and losers
-top_X = 300
+top_X = 200
 
 winners_df = profit_df.head(top_X).copy()
 winners_df['total_eth_value'] = (winners_df['total_wei_value'] / 1000000000000000000)
@@ -130,7 +133,7 @@ gc.collect()
 
 # %%
 # creating a displot for 'when / how to buy'
-fig = px.histogram(
+hist = px.histogram(
     final_df,
     x = 'start_activity',
     y = 'delta_eth',
@@ -148,7 +151,8 @@ fig = px.histogram(
     width = 1000,
     height = 1000
 )
-fig.show()
+# fig.show()
+st.plotly_chart(hist)
 
 # %%
 # creating a line plot for 'when to sell'
@@ -161,7 +165,7 @@ cols = ['w_or_l', 'delta_days_floor', 'delta_eth']
 mint_df = mint_df[cols].groupby(cols[:-1]).mean().reset_index()
 mint_df = mint_df.sort_values(by = 'delta_days_floor')
 
-fig = px.scatter(
+scat = px.scatter(
     mint_df,
     x = 'delta_days_floor',
     y = 'delta_eth',
@@ -180,5 +184,6 @@ fig = px.scatter(
     width = 1000,
     height = 1000
 )
-fig.show()
+# fig.show()
+st.plotly_chart(scat)
 
